@@ -1,0 +1,122 @@
+mod std.collections;
+include std.mem as mem;
+
+pub struct vector<_ty> {
+	_ty *data;
+	usize length;
+	usize capacity;
+}
+
+pub impl vector<_ty> {
+
+	pub inline fn new() vector<_ty> {
+		return vector<_ty>{ null, 0, 0 };
+	}
+
+	pub fn new_with_capacity(usize size) vector<_ty>{
+		_ty* data = match(@alloc.request(size)){
+			Ok(_ty* ptr) { return ptr; },
+			Error(string message) { panic(message); }
+		};
+
+		return vector{ data, 0, size };
+	}
+	
+	pub fn new_from_array(_ty[] @moves(data)) vector<_ty> {
+		return vector{ data as _ty*, data.length, data.length };
+	}
+
+	pub fn copy_from_array(_ty[] data) vector<_ty> {
+		_ty* buffer = copy(data) as _ty*;
+		return vector{ buffer, data.length, data.length };
+	}
+
+	pub fn clear(vector<_ty>& self, _ty value) vector<_ty>& {
+		for(usize i=0; i<self.length; i++){
+			self[i] = value;
+		}
+		return self;
+	}
+
+
+	pub fn destroy(vector<_ty>& self) result<void, string> {
+		@if(_ty is struct){
+			for(usize i=0; i<self.length; i++){
+				_ty.destroy(i);
+			}
+		}
+		
+		@alloc.free(self.data);
+		self.length = 0;
+		self.capacity = 0;
+		self.data = null;
+		
+		return Ok();
+	}
+
+	pub fn push_back(vector<_ty>& self, _ty& value) result<void, string> {
+		if(self.data == null){
+			resize(self, 8);
+		}
+		
+		if(self.length == self.capacity){
+			resize(self, self.capacity * 2);
+		}
+		
+		self.data[self.length] = value;
+		self.length++;
+		return;
+	}
+	
+	pub fn resize(vector<_ty>& self, usize newsize) result<void, string>  {
+		if(self.capacity >= newsize) return Ok();
+		
+		_ty* buffer = match(@alloc.request(newsize)) {
+			Ok(_ty* ptr) { return ptr; },
+			Error(string message) { panic(message); }
+		};
+		
+		if(self.data != null){
+			mem.copy_buffers<_ty>(buffer, self.data, self.length);
+			
+			@alloc.free(self.data);
+		}
+		
+		self.data = buffer;
+		self.capacity = newsize;
+		
+		return Ok();
+	}
+	
+	pub inline fn size(vector<_ty>& self) usize {
+		return self.length;
+	}
+	
+	pub inline fn data(vector<_ty>& self) _ty* {
+		return self.data;
+	}
+
+
+	// pre_assert adds an assertion before calling the function. If the pre_assert fails the function will never be called
+	// if the assert fails it will return a null-optional. This can be handled using the assert-non-null (!) optional operator or the default operator (??), or by assigning to an
+	// optional type. If the assigned type is not optional and it's not handled with the ! operator then
+	pub inline fn operator[](vector<_ty>& self, usize index) _ty&? {
+		pre_assert(index < self.length);
+
+		return self.data[index];		
+	}
+	
+	pub fn erase(vector<_ty>& self, usize index) result<void, string> {
+		assert(index < self.length, "Index out of bounds");
+		
+		@if(_ty is struct){
+			_ty.destroy(self.data[index]);
+		}
+		
+		for(usize i=index; i<self.length - 1; i++){
+			self.data[i] = self.data[i + 1];
+		}
+		self.length--;
+	}
+}
+

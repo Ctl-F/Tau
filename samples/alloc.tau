@@ -1,0 +1,93 @@
+mod std;
+
+@extern(libc) fn malloc(usize size) void*;
+@extern(libc) fn free(addr*);
+
+pub interface allocator<t> {
+	fn request(this, usize count) result<t*, string>;
+	fn free(this, t*) bool;
+
+	// begin the allocator
+	fn begin(this) void;
+
+	// end the allocator
+	/*
+	 testing 123
+	*/
+	fn end(this) void;
+	
+}
+
+struct default_alloc_node {
+	pub t* data_ptr;
+	pub default_alloc_node *next;
+}
+
+pub struct default_allocator {
+	default_alloc_node *root;
+}
+
+impl default_allocator<t> : allocator<t> {
+	pub fn begin(default_allocator<t>& this) void {
+		this.root = null;
+	}
+
+	pub fn end(default_allocator<t>& this) void{
+		default_alloc_node *tmp = this.root;
+		default_alloc_node *node = this.root;
+		while(node != null){
+			free(node.data_ptr);
+			tmp = node;
+			node = node.next;
+			free(tmp as void*);
+		}
+		
+	}
+
+	pub fn request(default_allocator<t>& this, usize count) result<t*, string> {
+		t* data = malloc(@sizeof(t) * count) as t*;
+		if(data == null){
+			return Error<string>("Out of memory");
+		}
+
+		default_alloc_node *node = malloc(sizeof(default_alloc_node)) as default_alloc_node*;
+
+		if(node == null){
+			free(data as void*);
+			return Error<string>("Out of memory");
+		}
+
+		node.data = data;
+		node.next = this.root;
+		this.root = node;
+
+		return Ok(node.data_ptr);
+	}
+
+	pub fn free(default_allocator<t>& this, t* ptr) bool {
+		default_alloc_node *previous = null;
+		default_alloc_node *node = this.root;
+
+		while(node != null){
+			if(node.data_ptr == ptr){
+				free(node.data_ptr as void*);
+
+				if(previous == null){
+					this.root = node.next;
+				}
+				else {
+					previous.next = node.next;
+				}
+
+				free(node as void*);
+				return true;
+			}
+			previous = node;
+			node = node.next;
+		}
+
+		return false;
+	}
+}
+
+static_default allocator = default_allocator;

@@ -1,0 +1,27 @@
+mod std.mem;
+
+/*
+	@null_check(params..) is a construct that automatically generates a assertion in the beginning
+	of the function that the given pointer is not null (and returns an error<string> result if the null check fails)
+	when calling a function that contains @null_check params, you can pass @not_null into the arguments to guarentee
+	that you are not passing in a null pointer and the null_checks will be discarded (this can improve performance
+	in cases like copy_arrays to copy_buffers) where we've already verified that the input arrays are not null
+	so there is no need to verify again
+
+*/
+
+pub inline fn copy_arrays<_ty>(_ty[] dest, _ty[] src) result<void, string> {
+	if(src.length == 0) return Ok();
+	assert(dest.length >= src.length, "Destination array must be at least the same length as the source array")
+	return copy_buffers(@not_null(dest as _ty*), @not_null(src as _ty*), _dest.length);
+}
+
+pub fn copy_buffers<_ty>(_ty* dest, _ty* src, usize count) result<void, string> {
+	@null_check(dest, src);
+	
+	for(usize i=0; i<count; i++){
+		dest[i] = src[i];
+	}
+	return Ok();
+}
+

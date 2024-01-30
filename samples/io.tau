@@ -1,0 +1,53 @@
+mod std.io;
+
+@extern(libc) fn printf(char*, ...) void;
+@extern(libc) fn getline(char*, usize*) void;
+
+pub fn println(string& str) void {
+	printf(@cstr("%s\n"), str.cstr() );
+}
+
+pub fn print(string& str) void {
+	printf(@cstr("%s"), str.cstr());
+}
+
+pub fn get_line() result<string, string> {
+	char* buffer = null;
+	usize length = 0;
+	
+	getline(buffer, &length);
+	
+	@null_check(buffer);
+	
+	return Ok(string.take_cstr(buffer)); // takes ownership of buffer
+}
+
+pub fn get_int() result<i64, string> {
+	char* buffer = null;
+	usize length = 0;
+	
+	getline(buffer, &length);
+	
+	@null_check(buffer);
+	
+	string str = string.take_cstr(buffer);
+	
+	return i64.parse(str);
+}
+
+pub fn get_bool() result<bool, string> {
+	char* buffer = null;
+	usize length = 0;
+	
+	getline(buffer, &length);
+	
+	@null_check(buffer);
+	
+	if(buffer[0] == 'y' || buffer[0] == 'Y') {
+		free(buffer);
+		return Ok(true);
+	}
+	
+	free(buffer);
+	return Ok(false);
+}

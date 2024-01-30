@@ -1,0 +1,59 @@
+mod factorial;
+
+include std.time;
+include std.io as io;
+include std.fmt as fmt;
+
+
+pub fn factorial(i64 n) i64 {
+	if(n < 2) return 1;
+	
+	return n * factorial(n - 1);
+}
+
+pub fn factorial_looped(i64 n) i64 {
+	if(n < 2) return 1;
+	
+	i64 sum = 1;
+	while(n > 1){
+		sum *= n;
+		n--;
+	}
+	
+	return sum;
+}
+
+
+fn main(string[] args) void {
+	use std.time.Instant as Instant;
+
+	io.println("Factorial of: ");
+	
+	loop $main {
+		i64 n = match(io.get_int()){
+			Ok(i64 val) { return val; },
+			Error(string message) { io.println("Please enter a valid integer!"); continue $main; }
+		}
+		
+		if(n < 0){
+			io.println("Please enter a positive integer!"); continue; // $main is optional here
+		}
+		
+		Instant start0 = time.now();
+		i64 result0 = factorial(n);
+		Instant end0 = time.now();
+		
+		
+		Instant start1 = time.now();
+		i64 result1 = factorial_looped(n);
+		Instant end1 = time.now();
+		
+		//io.println(i64.to_string(n) + "! calculated to be " + i64.to_string(result0) + " in " + time.Instant.to_milliseconds<float>().to_string() + "(ms) using recursion.");
+		io.println(fmt.format("{0}! calculated to be {1} in {2}(ms) using recursion.", n, result0, (end0 - start0).to_milliseconds<float>()));
+		io.println(fmt.format("{0}! calculated to be {1} in {2}(ms) using loops.", n, result1, (end1 - start1).to_milliseconds<float>()));
+		
+		break;
+	}
+}
+
+

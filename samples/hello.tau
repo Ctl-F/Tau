@@ -1,0 +1,7 @@
+mod app;
+
+include std.io as io;
+
+fn main(string[] args) void {
+	io.println("Hello World");
+}

@@ -1,0 +1,60 @@
+mod std.text;
+
+include std.collections;
+use std.collections.vector;
+
+fn compute_longest_proper_suffix(string& pattern, vector<usize>& lps) void {
+	i32 len = 0;
+	lps[0] = 0;
+	
+	for(usize i=1; i<pattern.length(); i=i){
+		if(pattern[i] == pattern[len]){
+			++len;
+			lps[i] = len;
+			++i;
+		}
+		else {
+			if(len != 0){
+				len = lps[len - 1];
+			}
+			else {
+				lps[i] = 0;
+				++i;
+			}
+		}
+	}
+}
+
+pub fn find(string& src, string& substr, usize offset = 0) usize {
+	usize m = substr.length();
+	usize n = src.length();
+	
+	vector<usize> lps = vector<usize>.new_with_capacity(m).clear(0);
+	compute_longest_proper_suffix(substr, lps);
+	
+	usize i = offset;
+	usize j = 0;
+	
+	while(i < n){
+		if(substr[j] == src[i]){
+			++i;
+			++j;
+		}
+		
+		if(j == m){
+			return (i - j);
+		}
+		else if(i < n && substr[j] != src[i]){
+			if(j != 0){
+				j = lps[j - 1];
+			}
+			else {
+				i++;
+			}
+		}
+	}
+	
+	return (-1) as usize;
+}
+
+

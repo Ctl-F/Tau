@@ -1,0 +1,49 @@
+mod app;
+
+include std.collections;
+include std.io as io;
+
+fn main(string[] args) void {
+	use ivec as std.collections.vector<i64>;
+
+	ivec my_numbers = ivec.new();
+	
+	i64 count = match(io.get_int()) {
+		Ok(i64 val) {
+			return val;
+		},
+		Error(string message) {
+			panic(message);
+		}
+	};
+	
+	if(count <= 0) {
+		println("No numbers to register");
+		return;
+	}
+	
+	for(i64 i=0; i<count; i++){
+		i64 num = match(io.get_int()){
+			Ok(i64 val){
+				return val;
+			},
+			Error(string message){
+				i--;
+				println("Please add a valid number: " + i64.to_string(count - i) + " of " + i64.to_string(count) + " remaining.");
+			}
+		};
+		
+		ivec.push_back(my_numbers, num);
+	}
+	
+	
+	print("The total of your numbers is: ");
+	
+	i64 sum = my_numbers[0];
+	for(usize i=1; i<ivec.size(my_numbers); i++){
+		sum += my_numbers[i];
+	}
+	println(i64.to_string(sum) + ".");
+	
+	return;
+}
